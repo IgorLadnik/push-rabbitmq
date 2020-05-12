@@ -26,7 +26,7 @@ const createConsumers = async (messageBrokerFactory: IMessageBrokerFactory): Pro
 
 (async function main() {
     const logger = new Logger();
-    logger.log('consumerApp startd');
+    logger.log('consumerApp started');
     
     messageBrokerFactory = new MessageBrokerFactory();
     consumers = await createConsumers(messageBrokerFactory);

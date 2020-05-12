@@ -26,7 +26,7 @@ const createPublishers = async (messageBrokerFactory: IMessageBrokerFactory): Pr
 
 (async function main() {
     const logger = new Logger();
-    logger.log('publisherApp startd');
+    logger.log('publisherApp started');
 
     messageBrokerFactory = new MessageBrokerFactory();
     publishers = await createPublishers(messageBrokerFactory);
