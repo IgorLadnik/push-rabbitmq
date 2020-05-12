@@ -132,4 +132,8 @@ export class Consumer extends Connection implements IConsumer {
 
         return this;
     }
+
+    getJsonObject = (msg: any) => JSON.parse(`${msg.content}`);
+
+    getQueueName = (msg: any): string => msg.fields.routingKey;
 }

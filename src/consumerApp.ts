@@ -32,9 +32,11 @@ const createConsumers = async (messageBrokerFactory: IMessageBrokerFactory): Pro
     consumers = await createConsumers(messageBrokerFactory);
 
     for (let i = 0; i < queueNames.length; i++) {
-        consumers[queueNames[i]].startConsume((msg: any) => {
-            const jsonMessage = JSON.parse(`${msg.content}`);
-            logger.log(`queue: ${msg.fields.routingKey}, ${JSON.stringify(jsonMessage)}`);
+        const consumer = consumers[queueNames[i]];
+        consumer.startConsume((msg: any) => {
+            const jsonMessage = consumer.getJsonObject(msg);
+            const queueName = consumer.getQueueName(msg);
+            logger.log(`queue: ${queueName}, ${JSON.stringify(jsonMessage)}`);
         }, true, true);
     }   
 })();

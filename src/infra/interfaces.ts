@@ -10,5 +10,7 @@ export interface IPublisher {
 }
 
 export interface IConsumer {
-    startConsume(processCallback: Function, durable: boolean, noAck: boolean): Promise<IConsumer>
+    startConsume(processCallback: Function, durable: boolean, noAck: boolean): Promise<IConsumer>;
+    getJsonObject(msg: any): any;
+    getQueueName(msg: any): string;
 }
