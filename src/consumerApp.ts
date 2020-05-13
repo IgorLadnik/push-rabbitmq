@@ -1,25 +1,29 @@
-import { IMessageBrokerFactory, IPublisher, IConsumer } from './infra/interfaces';
-import { MessageBrokerFactory, Publisher, Consumer } from './infra/rabbitmqProvider';
+import { Consumer } from './infra/rabbitmqProvider';
 import { Logger } from './infra/logger';
 import { Config, Message } from './config/config';
 
 interface ConsumerMap {
-    [name: string]: IConsumer;
+    [name: string]: Consumer;
 }
 
 const logger = new Logger();
 const connUrl = Config.messageBroker.connUrl;
-const queueNames = Config.messageBroker.queueNames;
-let messageBrokerFactory: IMessageBrokerFactory;
+//const queues = Config.messageBroker.queues;
+const numOfConsumers = 3;
 let consumers: ConsumerMap;
 
-const createConsumers = async (messageBrokerFactory: IMessageBrokerFactory): Promise<ConsumerMap> => {
+const createConsumers = async (): Promise<ConsumerMap> => {
     let consumers: ConsumerMap = { };
-    if (!messageBrokerFactory)
-        return consumers;
-       
-    for (let i = 0; i < queueNames.length; i++)
-        consumers[queueNames[i]] = await messageBrokerFactory.startConsumer(connUrl, queueNames[i], logger);
+
+    for (let i = 0; i < numOfConsumers; i++)
+        consumers[i] = await new Consumer({
+            connUrl,
+            exchange: 'notification',
+            queue: ''/*queues[i]*/,
+            exchangeType: 'fanout',
+            durable: true,
+            noAck: true
+        }, logger).createChannel();
 
     return consumers;
 }
@@ -28,17 +32,19 @@ const createConsumers = async (messageBrokerFactory: IMessageBrokerFactory): Pro
     const logger = new Logger();
     logger.log('consumerApp started');
     
-    messageBrokerFactory = new MessageBrokerFactory();
-    consumers = await createConsumers(messageBrokerFactory);
+    consumers = await createConsumers();
 
-    for (let i = 0; i < queueNames.length; i++) {
-        const consumer = consumers[queueNames[i]];
-        consumer.startConsume((msg: any) => {
+    const promises = new Array<Promise<Consumer>>();
+    for (let i = 0; i < numOfConsumers; i++) {
+        const consumer = consumers[i];
+        promises.push(consumer.startConsume((msg: any) => {
             const jsonMessage = consumer.getJsonObject(msg);
-            const queueName = consumer.getQueueName(msg);
-            logger.log(`queue: ${queueName}, ${JSON.stringify(jsonMessage)}`);
-        }, true, true);
-    }   
+            logger.log(`consumer: ${consumer.id}, exchange: ${msg.fields.exchange}, ` +
+                       `queue: ${msg.fields.routingKey}, message: ${JSON.stringify(jsonMessage)}`);
+        }));
+    }
+
+    await Promise.all(promises);
 })();
 
 

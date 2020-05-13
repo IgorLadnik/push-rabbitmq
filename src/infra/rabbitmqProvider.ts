@@ -1,37 +1,27 @@
-import { ILogger } from "./ilogger";
-import { IMessageBrokerFactory, IPublisher, IConsumer } from './interfaces';
-let amqp = require('amqplib');
+import { v4 as uuidv4 } from 'uuid';
+import { ILogger } from './ilogger';
+const amqp = require('amqplib');
 
-//export function create(): IMessageBrokerFactory { return new MessageBrokerFactory(); }
+export class PublisherOptions {
+    connUrl: string;
+    exchange: string;
+    queue: string;
+    exchangeType: string;
+    durable: boolean;
+    persistent: boolean;
+}
 
-export class MessageBrokerFactory implements IMessageBrokerFactory {
-    async startPublisher(connUrl: string, queueName: string, persistent: boolean, shouldPurge: boolean,
-                         l: ILogger): Promise<IPublisher> {
-        const publisher = new Publisher(connUrl, queueName, persistent, shouldPurge, l);
-        try {
-            await publisher.createChannel();
-        }
-        catch (err) {
-            l.log(err);
-        }
+export class ConsumerOptions {
+    connUrl: string;
+    exchange: string;
+    queue: string;
+    exchangeType: string;
+    durable: boolean;
+    noAck: boolean;
+}
 
-        if (shouldPurge)
-            await publisher.purge();
-
-        return publisher;
-    }
-
-    async startConsumer(connUrl: string, queueName: string, l: ILogger): Promise<IConsumer> {
-        const consumer = new Consumer(connUrl, queueName, l);
-        try {
-            await consumer.createChannel();
-        }
-        catch (err) {
-            l.log(err);
-        }
-
-        return consumer;
-    }
+export interface ConsumerFunction {
+    (msg: any): void;
 }
 
 export class Connection {
@@ -52,16 +42,23 @@ export class Connection {
     }
 }
 
-export class Publisher extends Connection implements IPublisher {
-    constructor(public connUrl: string, public queueName: string, 
-                public persistent: boolean, public shouldPurge: boolean, l :ILogger) {
-        super(connUrl, l);
+export class Publisher extends Connection {
+    id: string;
+
+    constructor(private po: PublisherOptions, l :ILogger) {
+        super(po.connUrl, l);
+        this.id = `publisher-${uuidv4()}`;
     }
 
     async createChannel(): Promise<Publisher> {
         let conn: any = await super.connect();
         try {
             this.channel = await conn.createConfirmChannel();
+
+            // if (this.po.shouldPurgeOnStart)
+            //     await this.purge();
+
+            this.channel.assertExchange(this.po.exchange, this.po.exchangeType, { durable: this.po.durable });
         }
         catch (err) {
             this.l.log(err);
@@ -71,9 +68,10 @@ export class Publisher extends Connection implements IPublisher {
     }
 
     private async publishOneAny(content: any): Promise<void> {
-        const persistent = this.persistent;
+        const persistent = this.po.persistent;
         try {
-            await this.channel.sendToQueue(this.queueName, content, { persistent });
+            //await this.channel.sendToQueue(this.po.queue, content, { this.po.isPersistent });
+            await this.channel.publish(this.po.exchange, this.po.queue/*''*/, content);
         }
         catch (err) {
             this.l.log(err);
@@ -92,26 +90,28 @@ export class Publisher extends Connection implements IPublisher {
         await Promise.all(promises);
     }
 
-    async purge(): Promise<void> {
-        try {
-            await this.channel.purgeQueue(this.queueName);
-        }
-        catch (err) {
-            this.l.log(err);
-        }
-    }
+    // async purge(): Promise<void> {
+    //     try {
+    //         await this.channel.purgeQueue(this.po.queue);
+    //     }
+    //     catch (err) {
+    //         this.l.log(err);
+    //     }
+    // }
 }
 
-export class Consumer extends Connection implements IConsumer {
-    constructor(public connUrl: string, public queueName: string, l: ILogger) {
-        super(connUrl, l);
+export class Consumer extends Connection {
+    id: string;
+
+    constructor(private co: ConsumerOptions, l: ILogger) {
+        super(co.connUrl, l);
+        this.id = `consumer-${uuidv4()}`;
     }
     
     async createChannel(): Promise<Consumer> {
         let conn: any = await super.connect();
         try {
             this.channel = await conn.createChannel();
-            await this.channel.prefetch();
         }
         catch (err) {
             this.l.log(err);
@@ -120,11 +120,21 @@ export class Consumer extends Connection implements IConsumer {
         return this;
     }
 
-    async startConsume(processCallback: Function, durable: boolean, noAck: boolean)
-                : Promise<Consumer> {
+    async startConsume(consumerFn: ConsumerFunction): Promise<Consumer> {
         try {
-            await this.channel.assertQueue(this.queueName, { durable });
-            await this.channel.consume(this.queueName, processCallback, { noAck });
+            await this.channel.assertExchange(this.co.exchange, this.co.exchangeType, { durable: this.co.durable });
+            await this.channel.assertQueue(this.co.queue, { durable: this.co.durable });
+            await this.channel.bindQueue(this.co.queue, this.co.exchange, '');
+            await this.channel.consume(this.co.queue,
+                (msg: any) => {
+                    try {
+                        consumerFn(msg);
+                    }
+                    catch (err) {
+                        this.l.log(err);
+                    }
+                },
+                { noAck: this.co.noAck });
         }
         catch (err) {
             this.l.log(err);
@@ -134,6 +144,4 @@ export class Consumer extends Connection implements IConsumer {
     }
 
     getJsonObject = (msg: any) => JSON.parse(`${msg.content}`);
-
-    getQueueName = (msg: any): string => msg.fields.routingKey;
 }
