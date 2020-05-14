@@ -16,14 +16,14 @@ const createPublishers = async (): Promise<PublisherMap> => {
     let publishers: PublisherMap = { };
 
     for (let i = 0; i < numOfPublishers; i++)
-        publishers[i] = await new Publisher({
+        publishers[i] = await Publisher.CreatePublisher({
             connUrl,
             exchange: 'notification',
             queue: '',
             exchangeType: 'fanout',
             durable: true,
             persistent: false
-        }, logger).createChannel();
+        }, logger);
 
     return publishers;
 }

@@ -16,14 +16,14 @@ const createConsumers = async (): Promise<ConsumerMap> => {
     let consumers: ConsumerMap = { };
 
     for (let i = 0; i < numOfConsumers; i++)
-        consumers[i] = await new Consumer({
+        consumers[i] = await Consumer.CreateConsumer({
             connUrl,
             exchange: 'notification',
             queue: ''/*queues[i]*/,
             exchangeType: 'fanout',
             durable: true,
             noAck: true
-        }, logger).createChannel();
+        }, logger);
 
     return consumers;
 }

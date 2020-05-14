@@ -40,10 +40,24 @@ export class Connection {
             this.l.log(err);
         }
     }
+
+    async createChannelConnection(): Promise<void> {
+        let conn: any = await this.connect();
+        try {
+            this.channel = await conn.createChannel();
+        }
+        catch (err) {
+            this.l.log(err);
+        }
+    }
 }
 
 export class Publisher extends Connection {
     id: string;
+
+    static async CreatePublisher(po: PublisherOptions, l :ILogger) {
+        return await new Publisher(po, l).createChannel();
+    }
 
     constructor(private po: PublisherOptions, l :ILogger) {
         super(po.connUrl, l);
@@ -51,26 +65,13 @@ export class Publisher extends Connection {
     }
 
     async createChannel(): Promise<Publisher> {
-        let conn: any = await super.connect();
-        try {
-            this.channel = await conn.createConfirmChannel();
-
-            // if (this.po.shouldPurgeOnStart)
-            //     await this.purge();
-
-            this.channel.assertExchange(this.po.exchange, this.po.exchangeType, { durable: this.po.durable });
-        }
-        catch (err) {
-            this.l.log(err);
-        }
-
+        await this.createChannelConnection();
         return this;
     }
 
     private async publishOneAny(content: any): Promise<void> {
         const persistent = this.po.persistent;
         try {
-            //await this.channel.sendToQueue(this.po.queue, content, { this.po.isPersistent });
             await this.channel.publish(this.po.exchange, this.po.queue/*''*/, content);
         }
         catch (err) {
@@ -103,23 +104,20 @@ export class Publisher extends Connection {
 export class Consumer extends Connection {
     id: string;
 
+    static async CreateConsumer(co: ConsumerOptions, l :ILogger) {
+        return await new Consumer(co, l).createChannel();
+    }
+
     constructor(private co: ConsumerOptions, l: ILogger) {
         super(co.connUrl, l);
         this.id = `consumer-${uuidv4()}`;
     }
-    
-    async createChannel(): Promise<Consumer> {
-        let conn: any = await super.connect();
-        try {
-            this.channel = await conn.createChannel();
-        }
-        catch (err) {
-            this.l.log(err);
-        }
 
+    async createChannel(): Promise<Consumer> {
+        await this.createChannelConnection();
         return this;
     }
-
+    
     async startConsume(consumerFn: ConsumerFunction): Promise<Consumer> {
         try {
             await this.channel.assertExchange(this.co.exchange, this.co.exchangeType, { durable: this.co.durable });
