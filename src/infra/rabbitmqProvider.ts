@@ -55,9 +55,8 @@ export class Connection {
 export class Publisher extends Connection {
     id: string;
 
-    static async CreatePublisher(po: PublisherOptions, l :ILogger) {
-        return await new Publisher(po, l).createChannel();
-    }
+    static createPublisher = async (po: PublisherOptions, l :ILogger): Promise<Publisher> =>
+        await new Publisher(po, l).createChannel();
 
     constructor(private po: PublisherOptions, l :ILogger) {
         super(po.connUrl, l);
@@ -79,9 +78,8 @@ export class Publisher extends Connection {
         }
     }
 
-    private async publishOne<T>(t: T): Promise<void> {
+    private publishOne = async <T>(t: T): Promise<void> =>
         await this.publishOneAny(Buffer.from(JSON.stringify(t)));
-    }
 
     async publish<T>(...arrT: Array<T>): Promise<void> {
         let promises = new Array<Promise<void>>();
@@ -104,9 +102,8 @@ export class Publisher extends Connection {
 export class Consumer extends Connection {
     id: string;
 
-    static async CreateConsumer(co: ConsumerOptions, l :ILogger) {
-        return await new Consumer(co, l).createChannel();
-    }
+    static createConsumer = async (co: ConsumerOptions, l :ILogger) =>
+        await new Consumer(co, l).createChannel();
 
     constructor(private co: ConsumerOptions, l: ILogger) {
         super(co.connUrl, l);

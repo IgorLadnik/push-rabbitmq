@@ -16,7 +16,7 @@ const createConsumers = async (): Promise<ConsumerMap> => {
     let consumers: ConsumerMap = { };
 
     for (let i = 0; i < numOfConsumers; i++)
-        consumers[i] = await Consumer.CreateConsumer({
+        consumers[i] = await Consumer.createConsumer({
             connUrl,
             exchange: 'notification',
             queue: ''/*queues[i]*/,

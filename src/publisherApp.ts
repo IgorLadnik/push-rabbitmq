@@ -16,7 +16,7 @@ const createPublishers = async (): Promise<PublisherMap> => {
     let publishers: PublisherMap = { };
 
     for (let i = 0; i < numOfPublishers; i++)
-        publishers[i] = await Publisher.CreatePublisher({
+        publishers[i] = await Publisher.createPublisher({
             connUrl,
             exchange: 'notification',
             queue: '',
