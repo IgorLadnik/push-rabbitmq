@@ -1,7 +1,9 @@
 export class Config {
     static messageBroker = {
         connUrl: 'amqp://localhost',
-        //queues: ['q-01', 'q-02', 'q-03']
+        exchange: 'notification',
+        exchangeType: 'fanout',
+        queues: [] //['q-01', 'q-02', 'q-03']
     };
 }
 

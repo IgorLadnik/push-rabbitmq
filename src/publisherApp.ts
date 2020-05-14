@@ -9,7 +9,7 @@ interface PublisherMap {
 const logger = new Logger();
 const connUrl = Config.messageBroker.connUrl;
 //const queues = Config.messageBroker.queues;
-const numOfPublishers = 2;
+const numOfPublishers = 1;
 let publishers: PublisherMap;
 
 const createPublishers = async (): Promise<PublisherMap> => {
@@ -18,9 +18,9 @@ const createPublishers = async (): Promise<PublisherMap> => {
     for (let i = 0; i < numOfPublishers; i++)
         publishers[i] = await Publisher.createPublisher({
             connUrl,
-            exchange: 'notification',
-            queue: '',
-            exchangeType: 'fanout',
+            exchange: Config.messageBroker.exchange,
+            queue: Config.messageBroker.queues[i] || '',
+            exchangeType: Config.messageBroker.exchangeType,
             durable: true,
             persistent: false
         }, logger);
@@ -33,14 +33,12 @@ const createPublishers = async (): Promise<PublisherMap> => {
     logger.log('publisherApp started');
 
     publishers = await createPublishers();
+    const publisher = publishers[0];
 
-    for (let i = 0; i < numOfPublishers; i++) {
-        const publisher = publishers[i];
-        publisher.publish<Message>(
-            new Message(publisher.id, 1, "text1"),
-            new Message(publisher.id, 2, "text2"),
-        );
-    }
+    let count = 0;
+
+    setInterval(() =>
+        publisher.publish<Message>(new Message(publisher.id, ++count, `text${count}`)),1000);
 })();
 
 

@@ -68,18 +68,13 @@ export class Publisher extends Connection {
         return this;
     }
 
-    private async publishOneAny(content: any): Promise<void> {
-        const persistent = this.po.persistent;
+    private async publishOne<T>(t: T): Promise<void> {
         try {
-            await this.channel.publish(this.po.exchange, this.po.queue/*''*/, content);
-        }
-        catch (err) {
+            await this.channel.publish(this.po.exchange, this.po.queue, Buffer.from(JSON.stringify(t)));
+        } catch (err) {
             this.l.log(err);
         }
     }
-
-    private publishOne = async <T>(t: T): Promise<void> =>
-        await this.publishOneAny(Buffer.from(JSON.stringify(t)));
 
     async publish<T>(...arrT: Array<T>): Promise<void> {
         let promises = new Array<Promise<void>>();
@@ -101,6 +96,7 @@ export class Publisher extends Connection {
 
 export class Consumer extends Connection {
     id: string;
+    isExchange = false;
 
     static createConsumer = async (co: ConsumerOptions, l :ILogger) =>
         await new Consumer(co, l).createChannel();
@@ -108,6 +104,7 @@ export class Consumer extends Connection {
     constructor(private co: ConsumerOptions, l: ILogger) {
         super(co.connUrl, l);
         this.id = `consumer-${uuidv4()}`;
+        this.isExchange = co.exchange?.length > 0 && co.exchangeType?.length > 0;
     }
 
     async createChannel(): Promise<Consumer> {
@@ -117,9 +114,14 @@ export class Consumer extends Connection {
     
     async startConsume(consumerFn: ConsumerFunction): Promise<Consumer> {
         try {
-            await this.channel.assertExchange(this.co.exchange, this.co.exchangeType, { durable: this.co.durable });
+            if (this.isExchange)
+                await this.channel.assertExchange(this.co.exchange, this.co.exchangeType, { durable: this.co.durable });
+
             await this.channel.assertQueue(this.co.queue, { durable: this.co.durable });
-            await this.channel.bindQueue(this.co.queue, this.co.exchange, '');
+
+            if (this.isExchange)
+                await this.channel.bindQueue(this.co.queue, this.co.exchange, '');
+
             await this.channel.consume(this.co.queue,
                 (msg: any) => {
                     try {

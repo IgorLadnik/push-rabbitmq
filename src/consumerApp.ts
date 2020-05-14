@@ -1,6 +1,6 @@
 import { Consumer } from './infra/rabbitmqProvider';
 import { Logger } from './infra/logger';
-import { Config, Message } from './config/config';
+import { Config } from './config/config';
 
 interface ConsumerMap {
     [name: string]: Consumer;
@@ -9,7 +9,7 @@ interface ConsumerMap {
 const logger = new Logger();
 const connUrl = Config.messageBroker.connUrl;
 //const queues = Config.messageBroker.queues;
-const numOfConsumers = 3;
+const numOfConsumers = 1;
 let consumers: ConsumerMap;
 
 const createConsumers = async (): Promise<ConsumerMap> => {
@@ -18,9 +18,9 @@ const createConsumers = async (): Promise<ConsumerMap> => {
     for (let i = 0; i < numOfConsumers; i++)
         consumers[i] = await Consumer.createConsumer({
             connUrl,
-            exchange: 'notification',
-            queue: ''/*queues[i]*/,
-            exchangeType: 'fanout',
+            exchange: Config.messageBroker.exchange,
+            queue: Config.messageBroker.queues[i] || '',
+            exchangeType: Config.messageBroker.exchangeType,
             durable: true,
             noAck: true
         }, logger);
