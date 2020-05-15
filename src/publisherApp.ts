@@ -7,17 +7,14 @@ interface PublisherMap {
 }
 
 const logger = new Logger();
-const connUrl = Config.messageBroker.connUrl;
-//const queues = Config.messageBroker.queues;
-const numOfPublishers = 1;
 let publishers: PublisherMap;
 
 const createPublishers = async (): Promise<PublisherMap> => {
     let publishers: PublisherMap = { };
 
-    for (let i = 0; i < numOfPublishers; i++)
+    for (let i = 0; i < Config.numOfPublishers; i++)
         publishers[i] = await Publisher.createPublisher({
-            connUrl,
+            connUrl: Config.messageBroker.connUrl,
             exchange: Config.messageBroker.exchange,
             queue: Config.messageBroker.queues[i] || '',
             exchangeType: Config.messageBroker.exchangeType,
@@ -33,12 +30,15 @@ const createPublishers = async (): Promise<PublisherMap> => {
     logger.log('publisherApp started');
 
     publishers = await createPublishers();
-    const publisher = publishers[0];
 
     let count = 0;
 
-    setInterval(() =>
-        publisher.publish<Message>(new Message(publisher.id, ++count, `text${count}`)),1000);
+    setInterval(() => {
+        for (let i = 0; i < Config.numOfPublishers; i++) {
+            const publisher = publishers[i];
+            publisher.publish<Message>(new Message(publisher.id, ++count, `text${count}`));
+        }
+    }, 1000);
 })();
 
 

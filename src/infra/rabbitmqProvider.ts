@@ -21,11 +21,11 @@ export class ConsumerOptions {
 }
 
 export interface ConsumerFunction {
-    (msg: any): void;
+    (msg: any, jsonPayload: any): void;
 }
 
 export class Connection {
-    channel: any; 
+    channel: any;
     l: ILogger;
 
     constructor(public connUrl: string, l :ILogger) {
@@ -37,7 +37,7 @@ export class Connection {
             return await amqp.connect(this.connUrl);
         }
         catch (err) {
-            this.l.log(err);
+            this.l.log(`Error in RabbitMQ Connection, \"Connection.connect()\", connUrl = \"${this.connUrl}\": ${err}`);
         }
     }
 
@@ -47,7 +47,7 @@ export class Connection {
             this.channel = await conn.createChannel();
         }
         catch (err) {
-            this.l.log(err);
+            this.l.log(`Error in RabbitMQ Connection, \"Connection.createChannelConnection()\": ${err}`);
         }
     }
 }
@@ -71,8 +71,9 @@ export class Publisher extends Connection {
     private async publishOne<T>(t: T): Promise<void> {
         try {
             await this.channel.publish(this.po.exchange, this.po.queue, Buffer.from(JSON.stringify(t)));
-        } catch (err) {
-            this.l.log(err);
+        }
+        catch (err) {
+            this.l.log(`Error in RabbitMQ Publisher, \"Publisher.publishOne()\": ${err}`);
         }
     }
 
@@ -125,20 +126,20 @@ export class Consumer extends Connection {
             await this.channel.consume(this.co.queue,
                 (msg: any) => {
                     try {
-                        consumerFn(msg);
+                        consumerFn(msg, Consumer.getJsonObject(msg));
                     }
                     catch (err) {
-                        this.l.log(err);
+                        this.l.log(`Error in RabbitMQ Consumer, a consumer supplied callback: ${err}`);
                     }
                 },
                 { noAck: this.co.noAck });
         }
         catch (err) {
-            this.l.log(err);
+            this.l.log(`Error in Error in RabbitMQ Consumer, \"Consumer.startConsume()\": ${err}`);
         }
 
         return this;
     }
 
-    getJsonObject = (msg: any) => JSON.parse(`${msg.content}`);
+    static getJsonObject = (msg: any) => JSON.parse(`${msg.content}`);
 }
