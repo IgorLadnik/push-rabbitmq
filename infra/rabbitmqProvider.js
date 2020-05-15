@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const amqp = require('amqplib');
 
-class PublisherOptions {
+exports.PublisherOptions = class PublisherOptions {
     connUrl;
     exchange;
     queue;
@@ -10,7 +10,7 @@ class PublisherOptions {
     persistent;
 }
 
-class ConsumerOptions {
+exports.ConsumerOptions = class ConsumerOptions {
     connUrl;
     exchange;
     queue;
@@ -18,10 +18,6 @@ class ConsumerOptions {
     durable;
     noAck;
 }
-
-// export interface ConsumerFunction {
-//     (msg: any, jsonPayload: any): void;
-// }
 
 class Connection {
     connUrl;
@@ -53,7 +49,7 @@ class Connection {
     }
 }
 
-class Publisher extends Connection {
+exports.Publisher = class Publisher extends Connection {
     id;
     po;
 
@@ -98,7 +94,7 @@ class Publisher extends Connection {
     // }
 }
 
-class Consumer extends Connection {
+exports.Consumer = class Consumer extends Connection {
     id;
     co;
     isExchange;
@@ -149,8 +145,5 @@ class Consumer extends Connection {
     static getJsonObject = (msg) => JSON.parse(`${msg.content}`);
 }
 
-exports.PublisherOptions = PublisherOptions;
-exports.ConsumerOptions = ConsumerOptions;
-exports.Connection = Connection;
-exports.Publisher = Publisher;
-exports.Consumer = Consumer;
+
+

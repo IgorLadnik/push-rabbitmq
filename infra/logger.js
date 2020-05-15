@@ -1,5 +1,3 @@
-class Logger {
+exports.Logger = class Logger {
     log = (msg) => console.log(`* ${msg}`);
 }
-
-exports.Logger = Logger;

@@ -1,4 +1,4 @@
-class Config {
+exports.Config = class Config {
     static messageBroker = {
         connUrl: 'amqp://localhost',
         exchange: 'notification',
@@ -10,7 +10,7 @@ class Config {
     static numOfConsumers  = 3;
 }
 
-class Message {
+exports.Message = class Message {
     publisher;
     id;
     text;
@@ -21,7 +21,3 @@ class Message {
         this.text = text;
     }
 }
-
-exports.Config = Config;
-exports.Message = Message;
-
