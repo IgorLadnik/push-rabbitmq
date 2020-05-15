@@ -1,16 +1,16 @@
-import { Consumer } from './infra/rabbitmqProvider';
-import { Logger } from './infra/logger';
-import { Config } from './config/config';
+const Consumer = require('./infra/rabbitmqProvider').Consumer;
+const Logger = require('./infra/logger').Logger;
+const Config = require('./config/config').Config;
 
-interface ConsumerMap {
-    [name: string]: Consumer;
-}
+// interface ConsumerMap {
+//     [name: string]: Consumer;
+// }
 
 const logger = new Logger();
-let consumers: ConsumerMap;
+let consumers;
 
-const createConsumers = async (): Promise<ConsumerMap> => {
-    let consumers: ConsumerMap = { };
+const createConsumers = async () => {
+    let consumers = { };
 
     for (let i = 0; i < Config.numOfConsumers; i++)
         consumers[i] = await Consumer.createConsumer({
@@ -31,10 +31,10 @@ const createConsumers = async (): Promise<ConsumerMap> => {
     
     consumers = await createConsumers();
 
-    const promises = new Array<Promise<Consumer>>();
+    const promises = [];
     for (let i = 0; i < Config.numOfConsumers; i++) {
         const consumer = consumers[i];
-        promises.push(consumer.startConsume((msg: any, jsonPayload: any) => {
+        promises.push(consumer.startConsume((msg, jsonPayload) => {
             logger.log(`consumer: ${consumer.id}, exchange: ${msg.fields.exchange}, ` +
                        `queue: ${msg.fields.routingKey}, message: ${JSON.stringify(jsonPayload)}`);
         }));

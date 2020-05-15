@@ -3,11 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "dependencies": {
-    "@types/amqplib": "^0.5.13",
-    "@types/cors": "^2.8.6",
-    "@types/lodash": "^4.14.150",
-    "@types/node-fetch": "^2.5.5",
-    "@types/uuid": "^7.0.0",
     "amqplib": "^0.5.5",
     "buffer": "^5.4.3",
     "fetch": "^1.1.0",
@@ -20,15 +15,13 @@
     "require-from-url": "^3.1.3",
     "tsc": "^1.20150623.0",
     "tslint": "^6.0.0",
-    "typescript": "^3.8.2",
     "url-join": "^4.0.1",
     "uuid": "^7.0.2"
   },
   "devDependencies": {},
   "scripts": {
-    "build": "tsc -watch",
-    "runConsumer": "node ./dist/consumerApp.js",
-    "runPublisher": "node ./dist/publisherApp.js"
+    "runConsumer": "node ./consumerApp.js",
+    "runPublisher": "node ./publisherApp.js"
   },
   "author": "",
   "license": "ISC"

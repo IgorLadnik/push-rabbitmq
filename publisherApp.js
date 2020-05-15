@@ -1,16 +1,17 @@
-import { Publisher } from './infra/rabbitmqProvider';
-import { Logger } from './infra/logger';
-import { Config, Message } from './config/config';
+const Publisher = require('./infra/rabbitmqProvider').Publisher;
+const Logger = require('./infra/logger').Logger;
+const Config = require('./config/config').Config;
+const Message = require('./config/config').Message;
 
-interface PublisherMap {
-    [name: string]: Publisher;
-}
+// interface PublisherMap {
+//     [name: string]: Publisher;
+// }
 
 const logger = new Logger();
-let publishers: PublisherMap;
+let publishers;
 
-const createPublishers = async (): Promise<PublisherMap> => {
-    let publishers: PublisherMap = { };
+const createPublishers = async () => {
+    let publishers = { };
 
     for (let i = 0; i < Config.numOfPublishers; i++)
         publishers[i] = await Publisher.createPublisher({
@@ -36,7 +37,7 @@ const createPublishers = async (): Promise<PublisherMap> => {
     setInterval(() => {
         for (let i = 0; i < Config.numOfPublishers; i++) {
             const publisher = publishers[i];
-            publisher.publish<Message>(new Message(publisher.id, ++count, `text${count}`));
+            publisher.publish(new Message(publisher.id, ++count, `text${count}`));
         }
     }, 1000);
 })();

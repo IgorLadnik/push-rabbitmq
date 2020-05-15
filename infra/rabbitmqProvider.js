@@ -1,38 +1,39 @@
-import { v4 as uuidv4 } from 'uuid';
-import { ILogger } from './ilogger';
+const { v4: uuidv4 } = require('uuid');
 const amqp = require('amqplib');
 
-export class PublisherOptions {
-    connUrl: string;
-    exchange: string;
-    queue: string;
-    exchangeType: string;
-    durable: boolean;
-    persistent: boolean;
+class PublisherOptions {
+    connUrl;
+    exchange;
+    queue;
+    exchangeType;
+    durable;
+    persistent;
 }
 
-export class ConsumerOptions {
-    connUrl: string;
-    exchange: string;
-    queue: string;
-    exchangeType: string;
-    durable: boolean;
-    noAck: boolean;
+class ConsumerOptions {
+    connUrl;
+    exchange;
+    queue;
+    exchangeType;
+    durable;
+    noAck;
 }
 
-export interface ConsumerFunction {
-    (msg: any, jsonPayload: any): void;
-}
+// export interface ConsumerFunction {
+//     (msg: any, jsonPayload: any): void;
+// }
 
-export class Connection {
-    channel: any;
-    l: ILogger;
+class Connection {
+    connUrl;
+    channel;
+    l;
 
-    constructor(public connUrl: string, l :ILogger) {
+    constructor(connUrl, l) {
+        this.connUrl = connUrl;
         this.l = l;
     }
 
-    async connect(): Promise<void> {
+    async connect() {
         try {
             return await amqp.connect(this.connUrl);
         }
@@ -41,8 +42,8 @@ export class Connection {
         }
     }
 
-    async createChannelConnection(): Promise<void> {
-        let conn: any = await this.connect();
+    async createChannelConnection() {
+        let conn = await this.connect();
         try {
             this.channel = await conn.createChannel();
         }
@@ -52,23 +53,25 @@ export class Connection {
     }
 }
 
-export class Publisher extends Connection {
-    id: string;
+class Publisher extends Connection {
+    id;
+    po;
 
-    static createPublisher = async (po: PublisherOptions, l :ILogger): Promise<Publisher> =>
+    static createPublisher = async (po, l) =>
         await new Publisher(po, l).createChannel();
 
-    constructor(private po: PublisherOptions, l :ILogger) {
+    constructor(po, l) {
         super(po.connUrl, l);
         this.id = `publisher-${uuidv4()}`;
+        this.po = po;
     }
 
-    async createChannel(): Promise<Publisher> {
+    async createChannel() {
         await this.createChannelConnection();
         return this;
     }
 
-    private async publishOne<T>(t: T): Promise<void> {
+    async publishOne(t) {
         try {
             await this.channel.publish(this.po.exchange, this.po.queue, Buffer.from(JSON.stringify(t)));
         }
@@ -77,15 +80,15 @@ export class Publisher extends Connection {
         }
     }
 
-    async publish<T>(...arrT: Array<T>): Promise<void> {
-        let promises = new Array<Promise<void>>();
+    async publish(...arrT) {
+        let promises = [];
         for (let i = 0; i < arrT.length; i++)
-            promises.push(this.publishOne<T>(arrT[i]));
+            promises.push(this.publishOne(arrT[i]));
 
         await Promise.all(promises);
     }
 
-    // async purge(): Promise<void> {
+    // async purge() {
     //     try {
     //         await this.channel.purgeQueue(this.po.queue);
     //     }
@@ -95,25 +98,27 @@ export class Publisher extends Connection {
     // }
 }
 
-export class Consumer extends Connection {
-    id: string;
-    isExchange = false;
+class Consumer extends Connection {
+    id;
+    co;
+    isExchange;
 
-    static createConsumer = async (co: ConsumerOptions, l :ILogger) =>
+    static createConsumer = async (co, l) =>
         await new Consumer(co, l).createChannel();
 
-    constructor(private co: ConsumerOptions, l: ILogger) {
+    constructor(co, l) {
         super(co.connUrl, l);
         this.id = `consumer-${uuidv4()}`;
-        this.isExchange = co.exchange?.length > 0 && co.exchangeType?.length > 0;
+        this.co = co;
+        this.isExchange = co.exchange.length > 0 && co.exchangeType.length > 0;
     }
 
-    async createChannel(): Promise<Consumer> {
+    async createChannel() {
         await this.createChannelConnection();
         return this;
     }
     
-    async startConsume(consumerFn: ConsumerFunction): Promise<Consumer> {
+    async startConsume(consumerFn) {
         try {
             if (this.isExchange)
                 await this.channel.assertExchange(this.co.exchange, this.co.exchangeType, { durable: this.co.durable });
@@ -124,7 +129,7 @@ export class Consumer extends Connection {
                 await this.channel.bindQueue(this.co.queue, this.co.exchange, '');
 
             await this.channel.consume(this.co.queue,
-                (msg: any) => {
+                (msg) => {
                     try {
                         consumerFn(msg, Consumer.getJsonObject(msg));
                     }
@@ -141,5 +146,11 @@ export class Consumer extends Connection {
         return this;
     }
 
-    static getJsonObject = (msg: any) => JSON.parse(`${msg.content}`);
+    static getJsonObject = (msg) => JSON.parse(`${msg.content}`);
 }
+
+exports.PublisherOptions = PublisherOptions;
+exports.ConsumerOptions = ConsumerOptions;
+exports.Connection = Connection;
+exports.Publisher = Publisher;
+exports.Consumer = Consumer;
