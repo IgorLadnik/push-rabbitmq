@@ -3,10 +3,6 @@ const Logger = require('./infra/logger').Logger;
 const Config = require('./config/config').Config;
 const Message = require('./config/config').Message;
 
-// interface PublisherMap {
-//     [name: string]: Publisher;
-// }
-
 const logger = new Logger();
 let publishers;
 

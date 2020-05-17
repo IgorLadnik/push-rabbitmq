@@ -2,10 +2,6 @@ const Consumer = require('./infra/rabbitmqProvider').Consumer;
 const Logger = require('./infra/logger').Logger;
 const Config = require('./config/config').Config;
 
-// interface ConsumerMap {
-//     [name: string]: Consumer;
-// }
-
 const logger = new Logger();
 let consumers;
 
