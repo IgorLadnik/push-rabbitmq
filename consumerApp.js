@@ -27,16 +27,21 @@ const createConsumers = async () => {
     
     consumers = await createConsumers();
 
-    const promises = [];
+    let indent = '    ';
+    const prefixes = [];
+    let sum = '';
     for (let i = 0; i < Config.numOfConsumers; i++) {
-        const consumer = consumers[i];
-        promises.push(consumer.startConsume((msg, jsonPayload) => {
-            logger.log(`consumer: ${consumer.id}, exchange: ${msg.fields.exchange}, ` +
-                       `queue: ${msg.fields.routingKey}, message: ${JSON.stringify(jsonPayload)}`);
-        }));
+        sum += indent;
+        prefixes[i] = sum;
     }
 
-    await Promise.all(promises);
+    for (let i = 0; i < Config.numOfConsumers; i++) {
+        const consumer = consumers[i];
+        await consumer.startConsume((msg, jsonPayload) => {
+            logger.log(`${prefixes[i]}consumer: ${consumer.id}, exchange: ${msg.fields.exchange}, ` +
+                       `queue: ${msg.fields.routingKey}, message: ${JSON.stringify(jsonPayload)}`);
+        });
+    }
 })();
 
 

@@ -67,22 +67,16 @@ exports.Publisher = class Publisher extends Connection {
         return this;
     }
 
-    async publishOne(t) {
-        try {
-            await this.channel.publish(this.po.exchange, this.po.queue, Buffer.from(JSON.stringify(t)));
-        }
-        catch (err) {
-            this.l.log(`Error in RabbitMQ Publisher, \"Publisher.publishOne()\": ${err}`);
-        }
-    }
+    publish = (...arr) =>
+        arr.forEach(item => {
+            const strJson = Buffer.from(JSON.stringify(item));
+            if (this.channel.publish(this.po.exchange, this.po.queue, strJson))
+                this.l.log(strJson);
+        });
 
-    async publish(...arrT) {
-        let promises = [];
-        for (let i = 0; i < arrT.length; i++)
-            promises.push(this.publishOne(arrT[i]));
-
-        await Promise.all(promises);
-    }
+    publishAsync = (...arr) =>
+        new Promise(() =>
+            setImmediate(() => this.publish(...arr)));
 
     // async purge() {
     //     try {

@@ -35,7 +35,7 @@ const createPublishers = async () => {
             const publisher = publishers[i];
             publisher.publish(new Message(publisher.id, ++count, `text${count}`));
         }
-    }, 1000);
+    }, 5000);
 })();
 
 
