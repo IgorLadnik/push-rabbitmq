@@ -41,9 +41,9 @@ delay = (duration) =>
         for (let i = 0; i < Config.numOfPublishers; i++) {
             const publisher = publishers[i];
             await publisher.publishAsync(new Message(publisher.id, ++count, `text${count}`));
-            delay(1);
+            await delay(1);
         }
-    }, 1000);
+    }, 500);
 })();
 
 
