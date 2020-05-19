@@ -22,6 +22,13 @@ const createPublishers = async () => {
     return publishers;
 }
 
+delay = (duration) =>
+    new Promise(resolve => setTimeout(() => {
+        resolve();
+        //logger?.log(`delay for ${duration} ms`);
+    }, duration)
+);
+
 (async function main() {
     const logger = new Logger();
     logger.log('publisherApp started');
@@ -30,12 +37,13 @@ const createPublishers = async () => {
 
     let count = 0;
 
-    setInterval(() => {
+    setInterval(async () => {
         for (let i = 0; i < Config.numOfPublishers; i++) {
             const publisher = publishers[i];
-            publisher.publish(new Message(publisher.id, ++count, `text${count}`));
+            await publisher.publishAsync(new Message(publisher.id, ++count, `text${count}`));
+            delay(1);
         }
-    }, 5000);
+    }, 1000);
 })();
 
 

@@ -24,22 +24,29 @@ const createConsumers = async () => {
 (async function main() {
     const logger = new Logger();
     logger.log('consumerApp started');
-    
-    consumers = await createConsumers();
 
-    let indent = '    ';
-    const prefixes = [];
-    let sum = '';
+    let lastPublishedId = { };
+    let disorder = { };
+
     for (let i = 0; i < Config.numOfConsumers; i++) {
-        sum += indent;
-        prefixes[i] = sum;
+        lastPublishedId[i] = -1;
+        disorder[i] = 0;
     }
+
+    consumers = await createConsumers();
 
     for (let i = 0; i < Config.numOfConsumers; i++) {
         const consumer = consumers[i];
         await consumer.startConsume((msg, jsonPayload) => {
-            logger.log(`${prefixes[i]}consumer: ${consumer.id}, exchange: ${msg.fields.exchange}, ` +
+            logger.log(`consumer: ${consumer.id}, exchange: ${msg.fields.exchange}, ` +
                        `queue: ${msg.fields.routingKey}, message: ${JSON.stringify(jsonPayload)}`);
+
+            const messageId = parseInt(jsonPayload.id);           
+            if (messageId !== lastPublishedId[i] + 1 && lastPublishedId[i] > -1)
+                // Disorder case 
+                logger.log(`WRONG ORDER in ${consumer.id} consumer: ${++disorder[i]}`); 
+                
+                lastPublishedId[i] = messageId;    
         });
     }
 })();
