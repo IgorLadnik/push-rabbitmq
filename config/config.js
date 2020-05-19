@@ -1,4 +1,4 @@
-exports.Config = class Config {
+module.exports.Config = class Config {
     static messageBroker = {
         connUrl: 'amqp://localhost',
         exchange: 'notification',
@@ -10,7 +10,7 @@ exports.Config = class Config {
     static numOfConsumers  = 3;
 }
 
-exports.Message = class Message {
+module.exports.Message = class Message {
     publisher;
     id;
     text;

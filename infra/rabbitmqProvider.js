@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const amqp = require('amqplib');
 
-exports.PublisherOptions = class PublisherOptions {
+module.exports.PublisherOptions = class PublisherOptions {
     connUrl;
     exchange;
     queue;
@@ -10,7 +10,7 @@ exports.PublisherOptions = class PublisherOptions {
     persistent;
 }
 
-exports.ConsumerOptions = class ConsumerOptions {
+module.exports.ConsumerOptions = class ConsumerOptions {
     connUrl;
     exchange;
     queue;
@@ -49,7 +49,7 @@ class Connection {
     }
 }
 
-exports.Publisher = class Publisher extends Connection {
+module.exports.Publisher = class Publisher extends Connection {
     id;
     po;
 
@@ -88,7 +88,7 @@ exports.Publisher = class Publisher extends Connection {
     // }
 }
 
-exports.Consumer = class Consumer extends Connection {
+module.exports.Consumer = class Consumer extends Connection {
     id;
     co;
     isExchange;
