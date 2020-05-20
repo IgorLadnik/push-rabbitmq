@@ -75,8 +75,15 @@ module.exports.Publisher = class Publisher extends Connection {
         });
 
     publishAsync = (...arr) =>
-        new Promise(() =>
-            setImmediate(() => this.publish(...arr)));
+        new Promise(() => setImmediate(() =>
+                this.publish(...arr)
+            )
+        );
+
+
+    // publishAsync = (...arr) =>
+    //     new Promise(() =>
+    //         setImmediate(() => this.publish(...arr)));
 
     // async purge() {
     //     try {

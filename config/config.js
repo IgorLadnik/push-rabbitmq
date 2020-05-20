@@ -1,13 +1,13 @@
 module.exports.Config = class Config {
     static messageBroker = {
         connUrl: 'amqp://localhost',
-        exchange: 'notification',
-        exchangeType: 'fanout',
-        queues: [] //['q-01', 'q-02', 'q-03']
+        exchange: 'direct-notification',
+        exchangeType: 'direct',
+        queues: ['q-01', 'q-02']
     };
 
     static numOfPublishers = 2;
-    static numOfConsumers  = 3;
+    static numOfConsumers  = 6;
 }
 
 module.exports.Message = class Message {

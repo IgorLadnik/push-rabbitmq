@@ -8,15 +8,17 @@ let consumers;
 const createConsumers = async () => {
     let consumers = { };
 
-    for (let i = 0; i < Config.numOfConsumers; i++)
+    for (let i = 0; i < Config.numOfConsumers; i++) {
+        const queueNum = i % Config.messageBroker.queues.length;
         consumers[i] = await Consumer.createConsumer({
             connUrl: Config.messageBroker.connUrl,
             exchange: Config.messageBroker.exchange,
-            queue: Config.messageBroker.queues[i] || '',
+            queue: Config.messageBroker.queues[queueNum],
             exchangeType: Config.messageBroker.exchangeType,
             durable: true,
             noAck: true
         }, logger);
+    }
 
     return consumers;
 }
@@ -25,13 +27,13 @@ const createConsumers = async () => {
     const logger = new Logger();
     logger.log('consumerApp started');
 
-    let lastPublishedId = { };
-    let disorder = { };
-
-    for (let i = 0; i < Config.numOfConsumers; i++) {
-        lastPublishedId[i] = -1;
-        disorder[i] = 0;
-    }
+    // let lastPublishedId = { };
+    // let disorder = { };
+    //
+    // for (let i = 0; i < Config.numOfConsumers; i++) {
+    //     lastPublishedId[i] = -1;
+    //     disorder[i] = 0;
+    // }
 
     consumers = await createConsumers();
 
@@ -41,12 +43,12 @@ const createConsumers = async () => {
             logger.log(`consumer: ${consumer.id}, exchange: ${msg.fields.exchange}, ` +
                        `queue: ${msg.fields.routingKey}, message: ${JSON.stringify(jsonPayload)}`);
 
-            const messageId = parseInt(jsonPayload.id);           
-            if (messageId !== lastPublishedId[i] + 1 && lastPublishedId[i] > -1)
-                // Disorder case 
-                logger.log(`WRONG ORDER in ${consumer.id} consumer: ${++disorder[i]}`); 
-                
-                lastPublishedId[i] = messageId;    
+            // const messageId = parseInt(jsonPayload.id);
+            // if (messageId !== lastPublishedId[i] + 1 && lastPublishedId[i] > -1)
+            //     // Disorder case
+            //     logger.log(`WRONG ORDER in ${consumer.id} consumer: ${++disorder[i]}`);
+            //
+            //     lastPublishedId[i] = messageId;
         });
     }
 })();
