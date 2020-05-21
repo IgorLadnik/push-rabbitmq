@@ -1,5 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const amqp = require('amqplib');
+const PublisherOptions = amqp.PublisherOptions; 
+const ConsumerOptions = amqp.ConsumerOptions; 
 
 module.exports.PublisherOptions = class PublisherOptions {
     connUrl;
@@ -40,8 +42,10 @@ class Connection {
 
     async createChannelConnection() {
         let conn = await this.connect();
+                   
         try {
             this.channel = await conn.createChannel();
+            await this.channel.assertQueue('', { messageTtl: 10000 });
         }
         catch (err) {
             this.l.log(`Error in RabbitMQ Connection, \"Connection.createChannelConnection()\": ${err}`);
@@ -70,7 +74,7 @@ module.exports.Publisher = class Publisher extends Connection {
     publish = (...arr) =>
         arr.forEach(item => {
             const strJson = Buffer.from(JSON.stringify(item));
-            if (this.channel.publish(this.po.exchange, this.po.queue, strJson))
+            if (this.channel.publish(this.po.exchange, this.po.queue, strJson /*, options*/))
                 this.l.log(strJson);
         });
 
@@ -115,7 +119,7 @@ module.exports.Consumer = class Consumer extends Connection {
             if (this.isExchange)
                 await this.channel.assertExchange(this.co.exchange, this.co.exchangeType, { durable: this.co.durable });
 
-            await this.channel.assertQueue(this.co.queue, { durable: this.co.durable });
+            await this.channel.assertQueue(this.co.queue, { /*messageTtl: 60000,*/ durable: this.co.durable });
 
             if (this.isExchange)
                 await this.channel.bindQueue(this.co.queue, this.co.exchange, '');
