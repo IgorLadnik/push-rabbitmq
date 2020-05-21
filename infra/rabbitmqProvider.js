@@ -45,7 +45,6 @@ class Connection {
                    
         try {
             this.channel = await conn.createChannel();
-            await this.channel.assertQueue('', { messageTtl: 10000 });
         }
         catch (err) {
             this.l.log(`Error in RabbitMQ Connection, \"Connection.createChannelConnection()\": ${err}`);
@@ -119,7 +118,7 @@ module.exports.Consumer = class Consumer extends Connection {
             if (this.isExchange)
                 await this.channel.assertExchange(this.co.exchange, this.co.exchangeType, { durable: this.co.durable });
 
-            await this.channel.assertQueue(this.co.queue, { /*messageTtl: 60000,*/ durable: this.co.durable });
+            await this.channel.assertQueue(this.co.queue, { durable: this.co.durable });
 
             if (this.isExchange)
                 await this.channel.bindQueue(this.co.queue, this.co.exchange, '');
