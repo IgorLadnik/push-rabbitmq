@@ -74,16 +74,9 @@ module.exports.Publisher = class Publisher extends Connection {
                 this.l.log(strJson);
         });
 
-    publishAsync = (...arr) =>
-        new Promise(() => setImmediate(() =>
-                this.publish(...arr)
-            )
+    publishAsync = (...arr) => setImmediate(() =>
+            this.publish(...arr)
         );
-
-
-    // publishAsync = (...arr) =>
-    //     new Promise(() =>
-    //         setImmediate(() => this.publish(...arr)));
 
     // async purge() {
     //     try {
@@ -99,6 +92,7 @@ module.exports.Consumer = class Consumer extends Connection {
     id;
     co;
     isExchange;
+    bindedToQueue;
 
     static createConsumer = async (co, l) =>
         await new Consumer(co, l).createChannel();
@@ -108,6 +102,7 @@ module.exports.Consumer = class Consumer extends Connection {
         this.id = `consumer-${uuidv4()}`;
         this.co = co;
         this.isExchange = co.exchange.length > 0 && co.exchangeType.length > 0;
+        this.bindedToQueue = co.queue;
     }
 
     async createChannel() {
@@ -128,7 +123,7 @@ module.exports.Consumer = class Consumer extends Connection {
             await this.channel.consume(this.co.queue,
                 (msg) => {
                     try {
-                        consumerFn(msg, Consumer.getJsonObject(msg));
+                        consumerFn(msg, Consumer.getJsonObject(msg), this.bindedToQueue);
                     }
                     catch (err) {
                         this.l.log(`Error in RabbitMQ Consumer, a consumer supplied callback: ${err}`);

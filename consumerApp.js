@@ -39,9 +39,10 @@ const createConsumers = async () => {
 
     for (let i = 0; i < Config.numOfConsumers; i++) {
         const consumer = consumers[i];
-        await consumer.startConsume((msg, jsonPayload) => {
+        await consumer.startConsume((msg, jsonPayload, queue) => {
             logger.log(`consumer: ${consumer.id}, exchange: ${msg.fields.exchange}, ` +
-                       `queue: ${msg.fields.routingKey}, message: ${JSON.stringify(jsonPayload)}`);
+                       `routingKey: ${msg.fields.routingKey}, queue: ${queue}, ` + 
+                       `message: ${JSON.stringify(jsonPayload)}`);
 
             // const messageId = parseInt(jsonPayload.id);
             // if (messageId !== lastPublishedId[i] + 1 && lastPublishedId[i] > -1)
