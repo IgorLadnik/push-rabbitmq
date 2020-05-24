@@ -1,6 +1,6 @@
 module.exports.Config = class Config {
     static messageBroker = {
-        connUrl: 'amqp://localhost',
+        connUrl: 'amqp://guest:1237@localhost:5672',
         exchange: 'exchange-direct-notification',
         exchangeType: 'direct',
         queues: ['queue-service-01', 'queue-service-02']
