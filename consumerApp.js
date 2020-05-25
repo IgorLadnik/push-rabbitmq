@@ -1,6 +1,7 @@
-const Consumer = require('./infra/rabbitmqProvider').Consumer;
-const Logger = require('./infra/logger').Logger;
+const Consumer = require('./infra/rabbitmq-provider/consumer').Consumer;
 const Config = require('./config/config').Config;
+const Message = require('./config/config').Message;
+const Logger = require('./infra/logger').Logger;
 
 const logger = new Logger();
 let consumers;
@@ -27,14 +28,6 @@ const createConsumers = async () => {
     const logger = new Logger();
     logger.log('consumerApp started');
 
-    // let lastPublishedId = { };
-    // let disorder = { };
-    //
-    // for (let i = 0; i < Config.numOfConsumers; i++) {
-    //     lastPublishedId[i] = -1;
-    //     disorder[i] = 0;
-    // }
-
     consumers = await createConsumers();
 
     for (let i = 0; i < Config.numOfConsumers; i++) {
@@ -43,13 +36,6 @@ const createConsumers = async () => {
             logger.log(`consumer: ${consumer.id}, exchange: ${msg.fields.exchange}, ` +
                        `routingKey: ${msg.fields.routingKey}, queue: ${queue}, ` + 
                        `message: ${JSON.stringify(jsonPayload)}`);
-
-            // const messageId = parseInt(jsonPayload.id);
-            // if (messageId !== lastPublishedId[i] + 1 && lastPublishedId[i] > -1)
-            //     // Disorder case
-            //     logger.log(`WRONG ORDER in ${consumer.id} consumer: ${++disorder[i]}`);
-            //
-            //     lastPublishedId[i] = messageId;
         });
     }
 })();

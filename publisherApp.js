@@ -1,7 +1,7 @@
-const Publisher = require('./infra/rabbitmqProvider').Publisher;
-const Logger = require('./infra/logger').Logger;
+const Publisher = require('./infra/rabbitmq-provider/publisher').Publisher;
 const Config = require('./config/config').Config;
 const Message = require('./config/config').Message;
+const Logger = require('./infra/logger').Logger;
 
 const logger = new Logger();
 let publishers;
@@ -16,17 +16,18 @@ const createPublishers = async () => {
             queue: '',
             exchangeType: Config.messageBroker.exchangeType,
             durable: true,
-            persistent: false
+            persistent: true
         }, logger);
 
     return publishers;
 }
 
 delay = (duration) =>
-    new Promise(resolve => setTimeout(() => {
-        resolve();
-        //logger?.log(`delay for ${duration} ms`);
-    }, duration)
+    new Promise(resolve =>
+        setTimeout(() => {
+            resolve();
+            //logger?.log(`delay for ${duration} ms`);
+        }, duration)
 );
 
 (async function main() {
