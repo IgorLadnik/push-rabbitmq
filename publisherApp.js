@@ -1,4 +1,4 @@
-const Publisher = require('./infra/rabbitmq-provider/publisher').Publisher;
+const Publisher = require('rabbitmq-provider/publisher').Publisher;
 const Config = require('./config/config').Config;
 const Message = require('./config/config').Message;
 const Logger = require('./infra/logger').Logger;

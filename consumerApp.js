@@ -1,4 +1,4 @@
-const Consumer = require('./infra/rabbitmq-provider/consumer').Consumer;
+const Consumer = require('rabbitmq-provider/consumer').Consumer;
 const Config = require('./config/config').Config;
 const Message = require('./config/config').Message;
 const Logger = require('./infra/logger').Logger;

@@ -8,6 +8,7 @@
     "lodash": "^4.17.15",
     "node-uuid": "^1.4.8",
     "path": "^0.12.7",
+    "rabbitmq-provider": "git+https://github.com/IgorLadnik/rabbitmq-provider.git",
     "uuid": "^7.0.2"
   },
   "devDependencies": {},
