@@ -41,7 +41,12 @@ delay = (duration) =>
     setInterval(async () => {
         for (let i = 0; i < Config.numOfPublishers; i++) {
             const publisher = publishers[i];
-            publisher.publish(new Message(publisher.id, ++count, `text${count}`));
+
+            const arr = [];
+            for (let j = 0; j < 3; j++)
+                arr.push(new Message(publisher.id, ++count, `text${count}`));
+
+            publisher.publish(arr);
             await delay(1);
         }
     }, 500);
