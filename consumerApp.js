@@ -1,10 +1,6 @@
 const Consumer = require('rabbitmq-provider/consumer').Consumer;
+const Logger = require('rabbitmq-provider/logger').Logger;
 const Config = require('./config/config').Config;
-const Message = require('./config/config').Message;
-const Logger = require('./infra/logger').Logger;
-
-const logger = new Logger();
-let consumers;
 
 const createConsumers = async () => {
     let consumers = { };
@@ -18,7 +14,7 @@ const createConsumers = async () => {
             exchangeType: Config.messageBroker.exchangeType,
             durable: true,
             noAck: true
-        }, logger);
+        });
     }
 
     return consumers;
@@ -28,7 +24,7 @@ const createConsumers = async () => {
     const logger = new Logger();
     logger.log('consumerApp started');
 
-    consumers = await createConsumers();
+    const consumers = await createConsumers();
 
     for (let i = 0; i < Config.numOfConsumers; i++) {
         const consumer = consumers[i];

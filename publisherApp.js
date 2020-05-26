@@ -1,13 +1,10 @@
 const Publisher = require('rabbitmq-provider/publisher').Publisher;
+const Logger = require('rabbitmq-provider/logger').Logger;
 const Config = require('./config/config').Config;
 const Message = require('./config/config').Message;
-const Logger = require('./infra/logger').Logger;
-
-const logger = new Logger();
-let publishers;
 
 const createPublishers = async () => {
-    let publishers = { };
+    const publishers = { };
 
     for (let i = 0; i < Config.numOfPublishers; i++)
         publishers[i] = await Publisher.createPublisher({
@@ -17,7 +14,7 @@ const createPublishers = async () => {
             exchangeType: Config.messageBroker.exchangeType,
             durable: true,
             persistent: true
-        }, logger);
+        });
 
     return publishers;
 }
@@ -34,7 +31,7 @@ delay = (duration) =>
     const logger = new Logger();
     logger.log('publisherApp started');
 
-    publishers = await createPublishers();
+    const publishers = await createPublishers();
 
     let count = 0;
 
