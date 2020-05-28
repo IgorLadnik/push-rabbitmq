@@ -11,10 +11,6 @@ module.exports.Config = class Config {
 }
 
 module.exports.Message = class Message {
-    publisher;
-    id;
-    text;
-
     constructor(publisher, id, text) {
         this.publisher = publisher;
         this.id = id;

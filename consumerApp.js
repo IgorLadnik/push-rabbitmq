@@ -1,9 +1,6 @@
 const Consumer = require('rabbitmq-provider/consumer').Consumer;
-const Logger = require('rabbitmq-provider/logger').Logger;
 const Config = require('./config/config').Config;
 const _ = require('lodash');
-
-const logger = new Logger();
 
 const createConsumers = async () => {
     let consumers = { };
@@ -17,14 +14,17 @@ const createConsumers = async () => {
             exchangeType: Config.messageBroker.exchangeType,
             durable: true,
             noAck: true
-        });
+        },
+        (msg, jsonPayload, queue) => consumerCallback(msg, jsonPayload, queue, consumers[i].id),
+            (msg) => console.log(msg)
+        );
     }
 
     return consumers;
 }
 
 async function main() {
-    logger.log('consumerApp started');
+    console.log('consumerApp started');
 
     const consumers = await createConsumers();
 
@@ -32,15 +32,14 @@ async function main() {
 
     for (let i = 0; i < Config.numOfConsumers; i++) {
         const consumer = consumers[i];
-        await consumer.startConsume((msg, jsonPayload, queue) =>
-            consumerCallback(msg, jsonPayload, queue, consumer.id));
+        await consumer.startConsume();
     }
 }
 
 let messages = [];
 
 const consumerCallback = (msg, jsonPayload, queue, consumerId) => {
-    logger.log(`consumer: ${consumerId}, exchange: ${msg.fields.exchange}, ` +
+    console.log(`consumer: ${consumerId}, exchange: ${msg.fields.exchange}, ` +
         `routingKey: ${msg.fields.routingKey}, queue: ${queue}, ` +
         `message: ${JSON.stringify(jsonPayload)}`);
 
