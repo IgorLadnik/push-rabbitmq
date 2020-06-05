@@ -3,11 +3,11 @@ module.exports.Config = class Config {
         connUrl: 'amqp://guest:1237@localhost:5672',
         exchange: 'exchange-direct-notification',
         exchangeType: 'direct',
-        queues: ['queue-service-01', 'queue-service-02']
+        queues: ['queue-service-01']
     };
 
-    static numOfPublishers = 2;
-    static numOfConsumers  = 6;
+    static numOfPublishers = 1;
+    static numOfConsumers  = 2;
 }
 
 module.exports.Message = class Message {

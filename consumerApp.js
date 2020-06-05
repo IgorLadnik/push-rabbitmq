@@ -1,23 +1,31 @@
 const Consumer = require('rabbitmq-provider/consumer').Consumer;
+const utils = require('rabbitmq-provider/utils');
 const Config = require('./config/config').Config;
 const _ = require('lodash');
+const { v4: uuidv4 } = require('uuid');
+
+let consumers;
+let messages = { };
 
 const createConsumers = async () => {
     let consumers = { };
 
     for (let i = 0; i < Config.numOfConsumers; i++) {
-        const queueNum = i % Config.messageBroker.queues.length;
+        //const queueNum = i % Config.messageBroker.queues.length;
         consumers[i] = await Consumer.createConsumer({
-            connUrl: Config.messageBroker.connUrl,
-            exchange: Config.messageBroker.exchange,
-            queue: Config.messageBroker.queues[queueNum],
-            exchangeType: Config.messageBroker.exchangeType,
-            durable: true,
-            noAck: true
-        },
-        (msg, jsonPayload, queue) => consumerCallback(msg, jsonPayload, queue, consumers[i].id),
-            (msg) => console.log(msg)
+                connUrl: Config.messageBroker.connUrl,
+                exchangeType: Config.messageBroker.exchangeType,
+                exchange: Config.messageBroker.exchange,
+                queue: Config.messageBroker.queues[0], //$queue-${uuidv4()}\`,
+            },
+            (thisConsumer, msg) => {
+                if (!_.isNil(messages[thisConsumer.id]))
+                    messages[thisConsumer.id] = [...messages[thisConsumer.id], msg];
+            },
+            msg => console.log(msg)
         );
+
+        messages[consumers[i].id] = [];
     }
 
     return consumers;
@@ -26,35 +34,59 @@ const createConsumers = async () => {
 async function main() {
     console.log('consumerApp started');
 
-    const consumers = await createConsumers();
+    consumers = await createConsumers();
 
-    setInterval(() => fromRabbitMQ2Db(), 1000);
-
-    for (let i = 0; i < Config.numOfConsumers; i++) {
-        const consumer = consumers[i];
-        await consumer.startConsume();
-    }
+    for (let i = 0; i < Config.numOfConsumers; i++)
+        setInterval(() => fromRabbitMQ2Db(consumers[i], i), 5000);
 }
 
-let messages = [];
+let count = 10;
 
-const consumerCallback = (msg, jsonPayload, queue, consumerId) => {
-    console.log(`consumer: ${consumerId}, exchange: ${msg.fields.exchange}, ` +
-        `routingKey: ${msg.fields.routingKey}, queue: ${queue}, ` +
-        `message: ${JSON.stringify(jsonPayload)}`);
+const fromRabbitMQ2Db = (consumer, k) => {
+    if (_.isNil(consumer))
+        return;
 
-    if (queue === Config.messageBroker.queues[0]) {
-        messages.push(jsonPayload);
-    }
-}
+    setImmediate(() => {
+        count--;
 
-const fromRabbitMQ2Db = () => {
-    if (messages.length > 0) {
-        const dbArr = _.flatten(messages);
-        messages = [];
+        const msgs = messages[consumer.id];
+        if (msgs.length > 0) {
+            let dbArr = [];
+            utils.flatten(msgs).forEach(msg => {
+                const payloads = utils.flatten(Consumer.getJsonObject(msg));
+                const redelivered = msg.fields.redelivered;
+                payloads.forEach(payload => {
+                    dbArr = [...dbArr, {payload, redelivered}]
+                });
+            });
 
-        // Write dbArr to database here, perhaps with setImmediate()
-    }
+            const dbArrRedelivered = dbArr.filter(item => item.redelivered === true);
+
+            //--------------------------------------------------------------------------
+            // Write dbArr to database here
+
+            dbArr.forEach(item =>
+                console.log(`${consumer.id} ` +
+                    `message: ${JSON.stringify(item.payload)}, redelivered = ${item.redelivered}`));
+
+            //TEST ------------------------------------------------------------------
+            if (count === 0) {
+                consumer.stop();
+                console.log(`STOPPED - ${consumer.id}`);
+                for (let i = 0; i < Config.numOfConsumers; i++)
+                    if (consumers[i].id === consumer.id) {
+                        consumers[i] = null;
+                        return;
+                    }
+            }
+            //TEST ------------------------------------------------------------------
+
+            //--------------------------------------------------------------------------
+
+             messages[consumer.id].forEach(msg => consumer.ack(msg));
+             messages[consumer.id] = [];
+        }
+    });
 }
 
 main()

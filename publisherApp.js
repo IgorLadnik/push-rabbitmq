@@ -9,7 +9,6 @@ const createPublishers = async () => {
         publishers[i] = await Publisher.createPublisher({
             connUrl: Config.messageBroker.connUrl,
             exchange: Config.messageBroker.exchange,
-            queue: '',
             exchangeType: Config.messageBroker.exchangeType,
             durable: true,
             persistent: true
