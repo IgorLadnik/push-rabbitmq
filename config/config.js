@@ -6,8 +6,8 @@ module.exports.Config = class Config {
         queues: ['queue-service-01']
     };
 
-    static numOfPublishers = 1;
-    static numOfConsumers  = 2;
+    static numOfPublishers = 2;
+    static numOfConsumers  = 5;
 }
 
 module.exports.Message = class Message {
