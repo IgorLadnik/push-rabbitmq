@@ -11,12 +11,11 @@ const createConsumers = async () => {
     let consumers = [];
 
     for (let i = 0; i < Config.numOfConsumers; i++) {
-        //const queueNum = i % Config.messageBroker.queues.length;
         consumers[i] = await Consumer.createConsumer({
                 connUrl: Config.messageBroker.connUrl,
                 exchangeType: Config.messageBroker.exchangeType,
                 exchange: Config.messageBroker.exchange,
-                queue: Config.messageBroker.queues[0], //$queue-${uuidv4()}\`,
+                queue: Config.messageBroker.queue
             },
             new Logger()
         );
