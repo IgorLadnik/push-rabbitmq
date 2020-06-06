@@ -2,18 +2,22 @@ const Publisher = require('rabbitmq-provider/publisher').Publisher;
 const Config = require('./config/config').Config;
 const Message = require('./config/config').Message;
 
+class Logger {
+    log = (msg) => console.log(msg);
+}
+
 const createPublishers = async () => {
     const publishers = { };
 
     for (let i = 0; i < Config.numOfPublishers; i++)
         publishers[i] = await Publisher.createPublisher({
-            connUrl: Config.messageBroker.connUrl,
-            exchange: Config.messageBroker.exchange,
-            exchangeType: Config.messageBroker.exchangeType,
-            durable: true,
-            persistent: true
-        },
-            (msg) => console.log(msg)
+                connUrl: Config.messageBroker.connUrl,
+                exchange: Config.messageBroker.exchange,
+                exchangeType: Config.messageBroker.exchangeType,
+                durable: true,
+                persistent: true
+            },
+            new Logger()
         );
 
     return publishers;
